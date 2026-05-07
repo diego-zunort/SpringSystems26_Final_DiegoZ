@@ -109,3 +109,9 @@ Avg active workers    : 5 / 8
 Runtime    : FIFO 41128 ms  vs  Optimized 40138 ms  (1.02x speedup)
 Avg CPU    : FIFO 75%  vs  Optimized 75%
 ```
+
+## Tool Use Disclosure
+
+Tools:
+- ChatGPT: Used for debugging and aid on implementation of generator and monitor sections
+- Advice: Improvements on code organization by separating functions and keeping an organized flow.
