@@ -34,18 +34,6 @@ enum Policy{
     Optimized,
 }
 
-#[derive(Debug, Clone, Copy)]
-enum LoadMode{
-    Balance,
-    Stress,
-}
-
-#[derive(Debug)]
-enum WorkerMessage {
-    Run(Task, Duration),
-    Shutdown,
-}
-
 
 // Core Types =======================================================
 
@@ -79,25 +67,6 @@ pub struct Metrics {
     run_end: Option<Instant>,
 }
 
-#[derive(Debug)]
-struct MonitorS{
-    elapsed: Duration,
-    queue_length: usize,
-    cpu_q_len: usize,
-    io_q_len: usize,
-    workersUsed: usize,
-    cpuLoad: f64,
-}
-
-#[derive(Debug)]
-struct SharedS{
-    total_queue_len: usize,
-    cpu_queue_len: usize,
-    io_queue_len: usize,
-    busy_workers: usize,
-    current_cpu_load: f64,
-    done: bool,
-}
 
 
 // Metrics ==========================================================
@@ -251,23 +220,6 @@ impl WorkloadConfig {
     }
 }
 
-impl fmt::Display for LoadMode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            LoadMode::Balance => write!(f, "Balanced"),
-            LoadMode::Stress => write!(f, "Stressed"),
-        }
-    }
-}
-
-impl fmt::Display for TaskKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            TaskKind::Cpu => write!(f, "CPU"),
-            TaskKind::Io => write!(f, "IO"),
-        }
-    }
-}
 
 // Task Constructors ======================================================
 
@@ -353,7 +305,6 @@ fn run_simulation(config: WorkloadConfig, policy: Policy, label: &str) -> Metric
     let stop_monitor = Arc::new(AtomicBool::new(false));
 
     let metrics = Arc::new(Mutex::new(Metrics::new()));
-    let queue_samples: Arc<Mutex<Vec<MonitorS>>> = Arc::new(Mutex::new(Vec::new()));
 
     let (task_tx, task_rx) = mpsc::channel::<Task>();
     let (done_tx, done_rx) = mpsc::channel::<CompletionReport>();
@@ -371,7 +322,6 @@ fn run_simulation(config: WorkloadConfig, policy: Policy, label: &str) -> Metric
 
     let manager_handle = {
         let metrics_m = Arc::clone(&metrics);
-        let queue_samples_m = Arc::clone(&queue_samples);
         let cpu_percent_m = Arc::clone(&cpu_percent);
         let busy_workers_m = Arc::clone(&busy_workers);
         thread::spawn(move || {
@@ -383,7 +333,7 @@ fn run_simulation(config: WorkloadConfig, policy: Policy, label: &str) -> Metric
             let mut completed = 0usize;
             let expected = config.num_tasks as usize;
             let mut generator_done = false;
-            let start = Instant::now();
+            let _start = Instant::now();
 
             loop {
                 while let Ok(task) = task_rx.try_recv() {
@@ -464,17 +414,6 @@ fn run_simulation(config: WorkloadConfig, policy: Policy, label: &str) -> Metric
                     }
                 }
 
-                if let Ok(mut samples) = queue_samples_m.lock() {
-                    samples.push(MonitorS {
-                        elapsed: start.elapsed(),
-                        queue_length: cpu_queue.len() + io_queue.len(),
-                        cpu_q_len: cpu_queue.len(),
-                        io_q_len: io_queue.len(),
-                        workersUsed: busy_workers_m.load(Ordering::Relaxed),
-                        cpuLoad: cpu_percent_m.load(Ordering::Relaxed) as f64,
-                    });
-                }
-
                 match task_rx.recv_timeout(Duration::from_millis(1)) {
                     Ok(task) => match task.kind {
                         TaskKind::Cpu => cpu_queue.push(task),
@@ -543,7 +482,6 @@ fn run_simulation(config: WorkloadConfig, policy: Policy, label: &str) -> Metric
         guard.finalize();
         std::mem::replace(&mut *guard, Metrics::new())
     };
-    drop(queue_samples);
     out
 }
 
