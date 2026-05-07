@@ -1,4 +1,4 @@
-# Simulation Runner (Rust)
+# Concurrent Task Dispatcher Final Project Spring 2026
 
 ## How to run
 
@@ -46,7 +46,7 @@ For each simulation it prints a metrics summary:
 - average/peak CPU usage (from monitor samples every 10 ms)
 - average active workers
 
-## Example runs:
+## Example runs (Seed = 1):
 
 ```bash
 Workload   : 70% IO / 30% CPU  |  1000 tasks, 20 ms intervals

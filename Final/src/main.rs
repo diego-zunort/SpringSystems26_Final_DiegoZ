@@ -11,16 +11,15 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 
-// Constants =================================================================
+// Constants ================================================================
 
 const TASK_DURATION_MS: u64 = 200;
 const CPU_PERCENT: u32 = 35;
 const IO_PERCENT: u32 = 10;
-const SEED: u64 = 1;
+const SEED: u64 = 8454;
 const NUM_WORKERS: usize = 8;
 
-
-// Enums ======================================================================
+// Enums ====================================================================
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 enum TaskKind{
@@ -35,7 +34,7 @@ enum Policy{
 }
 
 
-// Core Types =======================================================
+// Core Types ===============================================================
 
 pub struct CompletionReport {
     #[allow(dead_code)]
@@ -69,7 +68,7 @@ pub struct Metrics {
 
 
 
-// Metrics ==========================================================
+// Metrics ==============================================================
 
 impl Metrics {
     pub fn new() -> Self {
